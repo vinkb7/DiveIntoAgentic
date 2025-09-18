@@ -50,4 +50,4 @@ async def summarize_youtube(call: ToolCall) -> ToolResult:
 
 if __name__ == "__main__":
     logging.info("Starting Worker MCP Server (YouTube Summarizer)...")
-     stdio_server(server).run()
+    stdio_server(server).run()
