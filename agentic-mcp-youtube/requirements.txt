@@ -1,0 +1,4 @@
+openai==1.42.0
+youtube-transcript-api==0.6.2
+mcp==0.3.0
+pytest==8.3.3
