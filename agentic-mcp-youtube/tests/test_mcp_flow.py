@@ -2,7 +2,9 @@ import subprocess
 import time
 import asyncio
 import pytest
-from mcp.client import MCPClient
+from mcp import ClientSession
+from mcp.client.stdio import stdio_client
+from mcp import StdioServerParameters
 
 @pytest.mark.asyncio
 async def test_mcp_integration():

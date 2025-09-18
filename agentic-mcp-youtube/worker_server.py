@@ -1,5 +1,5 @@
 import logging
-from mcp.server import MCPServer
+from mcp.server.stdio import stdio_server
 from mcp.types import ToolCall, ToolResult
 from youtube_transcript_api import YouTubeTranscriptApi
 from llm_client import chat_completion
@@ -50,4 +50,4 @@ async def summarize_youtube(call: ToolCall) -> ToolResult:
 
 if __name__ == "__main__":
     logging.info("Starting Worker MCP Server (YouTube Summarizer)...")
-    server.run()
+     stdio_server(server).run()

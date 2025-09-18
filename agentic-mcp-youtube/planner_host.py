@@ -1,7 +1,9 @@
 import asyncio
 import json
 import logging
-from mcp.client import MCPClient
+from mcp import ClientSession
+from mcp.client.stdio import stdio_client
+from mcp import StdioServerParameters
 from llm_client import chat_completion
 
 # Configure logging
