@@ -12,6 +12,7 @@ from llm_client import chat_completion  # your LLM wrapper (OpenAI or LM Studio)
 logging.basicConfig(level=logging.INFO, format="[PLANNER] %(message)s")
 load_dotenv()
 
+
 async def decide_with_llm(tools, user_goal: str):
     """
     Uses the LLM (via llm_client.chat_completion) to pick the best tool
@@ -38,6 +39,7 @@ Choose one tool and return valid JSON:
     decision = json.loads(raw_text)
     return decision["tool_name"], decision["arguments"]
 
+
 async def main():
     # Define how to launch Worker via stdio
     server_params = StdioServerParameters(
@@ -46,27 +48,27 @@ async def main():
         env=os.environ.copy()
     )
 
-    # Start stdio client
+    # Start stdio client and open session
     async with stdio_client(server_params) as (reader, writer):
-        session = await ClientSession.create(reader, writer)
-        await session.initialize()
+        async with ClientSession(reader, writer) as session:
+            await session.initialize()
 
-        # Discover tools from Worker
-        tools = await session.list_tools()
-        logging.info(f"Discovered tools → {tools}")
+            logging.info("Connected to Worker MCP server.")
 
-        # Example user goal
-        user_goal = "Summarize this YouTube video: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            # Discover tools from Worker
+            tools = await session.list_tools()
+            logging.info(f"Discovered tools → {tools}")
 
-        # Decide which tool + arguments using LLM
-        tool_name, args = await decide_with_llm(tools, user_goal)
+            # Example user goal
+            user_goal = "Summarize this YouTube video: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
-        # Call chosen tool
-        result = await session.call_tool(tool_name, args)
-        logging.info(f"Worker result → {result}")
+            # Decide which tool + arguments using LLM
+            tool_name, args = await decide_with_llm(tools, user_goal)
 
-        # Cleanly close
-        await session.close()
+            # Call chosen tool
+            result = await session.call_tool(tool_name, args)
+            logging.info(f"Worker result → {result}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
