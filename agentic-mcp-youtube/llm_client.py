@@ -6,7 +6,7 @@ from openai import OpenAI
 load_dotenv()
 
 PROFILE = os.getenv("PROFILE", "local")  # default to local if not set
-
+print(PROFILE)
 if PROFILE == "openai":
     API_KEY = os.getenv("OPENAI_API_KEY_OPENAI")
     API_BASE = os.getenv("OPENAI_API_BASE_OPENAI")
@@ -17,7 +17,9 @@ elif PROFILE == "local":
     MODEL = os.getenv("OPENAI_MODEL_LOCAL")
 else:
     raise ValueError(f"Unknown PROFILE={PROFILE}, must be 'openai' or 'local'")
-
+print(API_KEY)
+print(API_BASE)
+print(MODEL)
 # Create OpenAI-compatible client (works for both)
 client = OpenAI(api_key=API_KEY, base_url=API_BASE)
 
