@@ -1,5 +1,4 @@
 import logging
-from mcp.server.base import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import ToolCall, ToolResult
 from youtube_transcript_api import YouTubeTranscriptApi
