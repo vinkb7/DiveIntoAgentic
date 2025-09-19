@@ -1,20 +1,23 @@
+# planner_host.py
 import asyncio
 import json
 import logging
-from mcp import ClientSession
-from mcp.client.stdio import stdio_client
-from mcp import StdioServerParameters
-from llm_client import chat_completion
+import os
+from dotenv import load_dotenv
 
-# Configure logging
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from llm_client import chat_completion  # your LLM wrapper (OpenAI or LM Studio)
+
 logging.basicConfig(level=logging.INFO, format="[PLANNER] %(message)s")
+load_dotenv()
 
 async def decide_with_llm(tools, user_goal: str):
     """
-    LLM decides which tool to call + with what arguments.
+    Uses the LLM (via llm_client.chat_completion) to pick the best tool
+    given the user's goal.
     """
     tool_descriptions = json.dumps(tools, indent=2)
-
     prompt = f"""
 You are an AI planner. Available tools:
 
@@ -28,42 +31,42 @@ Choose one tool and return valid JSON:
   "arguments": {{ ... }}
 }}
     """
-
-    logging.info("Sending tool list + user goal to LLM for decision...")
-
     raw_text = chat_completion(
         messages=[{"role": "user", "content": prompt}],
         temperature=0
     )
-
-    logging.info(f"LLM raw output:\n{raw_text}")
-
     decision = json.loads(raw_text)
-    logging.info(f"LLM decided → tool='{decision['tool_name']}', args={decision['arguments']}")
     return decision["tool_name"], decision["arguments"]
 
 async def main():
-    # Connect to Worker Agent
-    client = MCPClient(command=["python", "worker_server.py"])
-    await client.initialize()
+    # Define how to launch Worker via stdio
+    server_params = StdioServerParameters(
+        command="python",
+        args=["worker_server.py"],
+        env=os.environ.copy()
+    )
 
-    tools = await client.list_tools()
-    logging.info(f"Discovered tools from WorkerAgent → {tools}")
+    # Start stdio client
+    async with stdio_client(server_params) as (reader, writer):
+        session = await ClientSession.create(reader, writer)
+        await session.initialize()
 
-    # Example user goal
-    user_goal = "Summarize this YouTube video: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        # Discover tools from Worker
+        tools = await session.list_tools()
+        logging.info(f"Discovered tools → {tools}")
 
-    # Let LLM decide
-    tool_name, args = await decide_with_llm(tools, user_goal)
+        # Example user goal
+        user_goal = "Summarize this YouTube video: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
-    # Execute via MCP
-    logging.info(f"Calling MCP tool '{tool_name}' with {args}")
-    result = await client.call_tool(tool_name, arguments=args)
+        # Decide which tool + arguments using LLM
+        tool_name, args = await decide_with_llm(tools, user_goal)
 
-    logging.info(f"Received Worker result → {result}")
+        # Call chosen tool
+        result = await session.call_tool(tool_name, args)
+        logging.info(f"Worker result → {result}")
 
-    await client.close()
+        # Cleanly close
+        await session.close()
 
 if __name__ == "__main__":
-    logging.info("Starting Planner Agent...")
     asyncio.run(main())
