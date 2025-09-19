@@ -1,4 +1,5 @@
 import logging
+from mcp.server.base import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import ToolCall, ToolResult
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -7,7 +8,7 @@ from llm_client import chat_completion
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="[WORKER] %(message)s")
 
-server = MCPServer("WorkerAgent")
+server = Server()
 
 def fetch_transcript(video_url: str):
     """Extract transcript from YouTube video using its ID."""
